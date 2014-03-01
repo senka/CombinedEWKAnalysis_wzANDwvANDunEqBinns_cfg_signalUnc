@@ -86,7 +86,6 @@ for section in fit_sections:
         norm_sig_sm_up = {}
         norm_sig_sm_down = {}
         signal_shapeSyst = [string(i) for i in cfg.get(codename,'signal_shape_syst').split(',')]
-#        signal_shapeSyst = cfg.get(codename,'signal_shape_syst')
         for i in range(0,len(signal_shapeSyst)):
             print ' signal shape syst: ',signal_shapeSyst[i]
             diboson_up[i] = f.Get('%sUp'%signal_shapeSyst[i])
@@ -325,14 +324,14 @@ jmax 1  number of backgrounds
 kmax *  number of nuisance parameters (sources of systematical uncertainties)
 ------------
 shapes WV_semileptonic_bkg_{codename}  {codename}boosted ./{codename}_boosted_ws.root WV_{codename}boosted:$PROCESS WV_{codename}boosted:$PROCESS_$SYSTEMATIC
-shapes data_obs                {codename}boosted ./{codename}_boosted_ws.root WV_{codename}boosted:$PROCESS """.format(codename=codename,norm_sig_sm=norm_sig_sm,norm_bkg=norm_bkg,norm_obs=norm_obs,background_shapeSyst=background_shapeSyst[i])
+shapes data_obs                {codename}boosted ./{codename}_boosted_ws.root WV_{codename}boosted:$PROCESS """.format(codename=codename,norm_sig_sm=norm_sig_sm,norm_bkg=norm_bkg,norm_obs=norm_obs)
     if (doSignalShape_unc):
         card += """   
-shapes WWgammaZ_WV_atgc_semileptonic_{codename} {codename}boosted ./{codename}_boosted_ws.root WV_{codename}boosted:ATGCPdf_$PROCESS WV_{codename}boosted:ATGCPdf_$PROCESS_$SYSTEMATIC """.format(codename=codename,norm_sig_sm=norm_sig_sm,norm_bkg=norm_bkg,norm_obs=norm_obs,background_shapeSyst=background_shapeSyst[i])
+shapes WWgammaZ_WV_atgc_semileptonic_{codename} {codename}boosted ./{codename}_boosted_ws.root WV_{codename}boosted:ATGCPdf_$PROCESS WV_{codename}boosted:ATGCPdf_$PROCESS_$SYSTEMATIC """.format(codename=codename,norm_sig_sm=norm_sig_sm,norm_bkg=norm_bkg,norm_obs=norm_obs)
     else:
         card += """   
 shapes WWgammaZ_WV_atgc_semileptonic_{codename} {codename}boosted ./{codename}_boosted_ws.root WV_{codename}boosted:ATGCPdf_$PROCESS WV_{codename}boosted:ATGCPdf_$PROCESS_$SYSTEMATIC
-""".format(codename=codename,norm_sig_sm=norm_sig_sm,norm_bkg=norm_bkg,norm_obs=norm_obs,background_shapeSyst=background_shapeSyst[i])
+""".format(codename=codename,norm_sig_sm=norm_sig_sm,norm_bkg=norm_bkg,norm_obs=norm_obs)
         
     card += """   
 ------------
@@ -347,13 +346,13 @@ rate                        {norm_sig_sm}		      {norm_bkg}
 ------------
 lumi_8TeV           lnN     1.044		      -
 CMS_eff_{codename[0]}           lnN     1.02                      -
-CMS_trigger_{codename[0]}       lnN     1.01                      -""".format(codename=codename,norm_sig_sm=norm_sig_sm,norm_bkg=norm_bkg,norm_obs=norm_obs,background_shapeSyst=background_shapeSyst[i])
+CMS_trigger_{codename[0]}       lnN     1.01                      -""".format(codename=codename,norm_sig_sm=norm_sig_sm,norm_bkg=norm_bkg,norm_obs=norm_obs)
 
     for i in range(0,len(background_shapeSyst)):
         card += """
 {background_shapeSyst} shape  -                         1.0 """.format(codename=codename,norm_sig_sm=norm_sig_sm,norm_bkg=norm_bkg,norm_obs=norm_obs,i=i,background_shapeSyst=background_shapeSyst[i])
     card += """
-sigXSsyst           lnN     1.034                     -""".format(codename=codename,norm_sig_sm=norm_sig_sm,norm_bkg=norm_bkg,norm_obs=norm_obs,i=i,background_shapeSyst=background_shapeSyst[i])
+sigXSsyst           lnN     1.034                     -""".format(codename=codename,norm_sig_sm=norm_sig_sm,norm_bkg=norm_bkg,norm_obs=norm_obs,i=i)
     if (doSignalShape_unc):
         for i in range(0,len(signal_shapeSyst)):
             card += """
