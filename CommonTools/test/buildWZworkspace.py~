@@ -41,33 +41,10 @@ norm_sig_sm_up = -1
 norm_sig_sm_down = -1
 norm_bkg = -1
 norm_obs = -1
-#if( lType == "muon" ) :
-#    codename = "mu"
-#elif( lType == "electron" ):
-#    codename = "el"
-#else:
-#    raise RuntimeError('InvalidLepton','You may only choose between "muon" and "electron" channels.')
 
-#if( lType == "ch1" ) :
-#    codename = "ch1"
-#elif( lType == "ch2" ):
-#    codename = "ch2"
-#elif( lType == "ch3" ):
-#    codename = "ch3"
-#elif( lType == "ch4" ):
-#    codename = "ch4"
-#else:
-#    raise RuntimeError('InvalidLepton','You may only choose between "ch1","ch2","ch3","ch4" channels.')
 
 fit_sections = cfg.sections()
 fit_sections.remove('Global') #don't need to iterate over the global configuration
-
-#lType = fit_sections
-#codename = fit_sections
-
-#par1Name=cfg.get('Global','par1Name')
-#par2Name=cfg.get('Global','par2Name')
-
 
 basepath = '%s/src/CombinedEWKAnalysis/CommonTools/data/WV_semileptonic'%os.environ['CMSSW_BASE']
 
@@ -92,44 +69,40 @@ for section in fit_sections:
         background_backshapeUp[i] = f.Get('%sUp'%background_shapeSyst[i])
         background_backshapeDown[i] = f.Get('%sDown'%background_shapeSyst[i])
 
-#    background_backshapeUp = f.Get('background_%sboosted_backshapeUp'%codename)
-#    background_backshapeDown = f.Get('background_%sboosted_backshapeDown'%codename)
     data_obs = f.Get('data_obs')
     diboson = f.Get('diboson')
 
     doSignalShape_unc=False
-    print 'doSignalShape_unc=',doSignalShape_unc
-
     cfg_items=cfg.items(codename)
     for cfg_item in cfg_items:
         if 'signal_shape_syst' in cfg_item:
             doSignalShape_unc = True
 
-#    if (cfg.get(codename,'signal_shape_syst')):
-#        doSignalShape_unc = True
-
-#    for line in cfg.get(codename,'signal_shape_syst'):
-#        if 'signal_shape_syst' in line:
-#            doSignalShape_unc = True
     print 'doSignalShape_unc=',doSignalShape_unc
 
     if (doSignalShape_unc):
-        signal_shapeSyst = cfg.get(codename,'signal_shape_syst')
-#        signal_shapeSyst = [string(i) for i in cfg.get(codename,'signal_shape_syst').split(',')]
-        #par1Name=cfg.get('Global','par1Name')
-        print 'signalshapeName=',signal_shapeSyst
-        print 'signalshapeName=%sUp'%signal_shapeSyst
-        diboson_up = f.Get('%sUp'%signal_shapeSyst)
-        diboson_down = f.Get('%sDown'%signal_shapeSyst)
-        norm_sig_sm_up = signal_shapeUp.Integral()
-        norm_sig_sm_down = signal_shapeDown.Integral()
+        diboson_up = {}
+        diboson_down = {}
+        norm_sig_sm_up = {}
+        norm_sig_sm_down = {}
+        signal_shapeSyst = [string(i) for i in cfg.get(codename,'signal_shape_syst').split(',')]
+#        signal_shapeSyst = cfg.get(codename,'signal_shape_syst')
+        for i in range(0,len(signal_shapeSyst)):
+            print ' signal shape syst: ',signal_shapeSyst[i]
+            diboson_up[i] = f.Get('%sUp'%signal_shapeSyst[i])
+            diboson_down[i] = f.Get('%sDown'%signal_shapeSyst[i])
+            norm_sig_sm_up[i] = diboson_up[i].Integral()
+            norm_sig_sm_down[i] = diboson_down[i].Integral()
 
-#    diboson_up = f.Get('signal_shapeUp')
-#    diboson_down = f.Get('signal_shapeDown')
+#        print 'signalshapeName=',signal_shapeSyst
+#        print 'signalshapeName=%sUp'%signal_shapeSyst
+#        diboson_up = f.Get('%sUp'%signal_shapeSyst)
+#        diboson_down = f.Get('%sDown'%signal_shapeSyst)
+#        norm_sig_sm_up = diboson_up.Integral()
+#        norm_sig_sm_down = diboson_down.Integral()
+
     
     norm_sig_sm = diboson.Integral()
-#    norm_sig_sm_up = diboson_up.Integral()
-#    norm_sig_sm_down = diboson_down.Integral()
     norm_bkg = background.Integral()
     norm_obs = data_obs.Integral()
 
@@ -161,17 +134,6 @@ for section in fit_sections:
     dkg = theWS.factory('dkg[0.,-0.15, 0.15]')
     dg1 = theWS.factory('dg1[0.,-0.1,0.1]')
 
-#    par2 = theWS.factory('%s[0.,-1.,1.]'%(par2Name))
-#    par2.setConstant(False)
-#    par1 = theWS.factory('%s[0.,-0.15, 0.15]'%(par1Name))
-
-#    par1.SetName('par1')
-#    par2.SetName('par2')
-#    par2 = theWS.factory('par2[0.,-1.,1.]')
-#    par2.setConstant(False)
-#    par1 = theWS.factory('par1[0.,-0.15, 0.15]')
-#    dg1 = theWS.factory('dg1[0.,-0.1,0.1]')
-
 
     vars = RooArgList(wpt)
     varSet = RooArgSet(wpt)
@@ -194,31 +156,24 @@ for section in fit_sections:
                                        'WV_semileptonic_bkg_%s_%sDown'%(codename,background_shapeSyst[i]),
                                        vars,
                                        background_backshapeDown[i])
-#        bkgHist_systUp[i] = RooDataHist('WV_semileptonic_bkg_%s_%sboosted_%s_backshapeUp'%(codename,codename,background_shapeSyst[i]),
-#                                     'WV_semileptonic_bkg_%s_%sboosted_%s_backshapeUp'%(codename,codename,background_shapeSyst[i]),
-#                                     vars,
-#                                     background_backshapeUp[i])
-#        bkgHist_systDown[i] = RooDataHist('WV_semileptonic_bkg_%s_%sboosted_%s_backshapeDown'%(codename,
-#                                                                                         codename,background_shapeSyst[i]),
-#                                       'WV_semileptonic_bkg_%s_%sboosted_%s_backshapeDown'%(codename,
-#                                                                                         codename,background_shapeSyst[i]),
-#                                       vars,
-#                                       background_backshapeDown[i])
-    
+   
     dibosonHist = RooDataHist('WV_semileptonic_SM_%s_rawshape'%codename,
                               'WV_semileptonic_SM_%s_rawshape'%codename,
                               vars,
                               diboson)
 
     if (doSignalShape_unc):
-        dibosonHist_up = RooDataHist('WV_semileptonic_SM_%s_rawshape_signalshapeUp'%codename,
-                                     'WV_semileptonic_SM_%s_rawshape_signalshapeUp'%codename,
-                                     vars,
-                                     diboson_up)
-        dibosonHist_down = RooDataHist('WV_semileptonic_SM_%s_rawshape_signalshapeDown'%codename,
-                                       'WV_semileptonic_SM_%s_rawshape_signalshapeDown'%codename,
-                                       vars,
-                                       diboson_down)
+        dibosonHist_up = {}
+        dibosonHist_down = {}
+        for i in range(0,len(signal_shapeSyst)):
+            dibosonHist_up[i] = RooDataHist('WV_semileptonic_SM_%s_rawshape_%sUp'%(codename,signal_shapeSyst[i]),
+                                         'WV_semileptonic_SM_%s_rawshape_%sUp'%(codename,signal_shapeSyst[i]),
+                                         vars,
+                                         diboson_up[i])
+            dibosonHist_down[i] = RooDataHist('WV_semileptonic_SM_%s_rawshape_%sDown'%(codename,signal_shapeSyst[i]),
+                                           'WV_semileptonic_SM_%s_rawshape_%sDown'%(codename,signal_shapeSyst[i]),
+                                           vars,
+                                           diboson_down[i])
 
     dibosonPdf = RooHistFunc('WV_semileptonic_SM_%s_shape'%codename,
                              'WV_semileptonic_SM_%s_shape'%codename,
@@ -226,14 +181,17 @@ for section in fit_sections:
                              dibosonHist)
 
     if (doSignalShape_unc):
-        dibosonPdf_up = RooHistFunc('WV_semileptonic_SM_%s_shape_signalshapeUp'%codename,
-                                    'WV_semileptonic_SM_%s_shape_signalshapeUp'%codename,
-                                    varSet,
-                                    dibosonHist_up)
-        dibosonPdf_down = RooHistFunc('WV_semileptonic_SM_%s_shape_signalshapeDown'%codename,
-                                      'WV_semileptonic_SM_%s_shape_signalshapeDown'%codename,
-                                      varSet,
-                                      dibosonHist_down)
+        dibosonPdf_up = {}
+        dibosonPdf_down = {}
+        for i in range(0,len(signal_shapeSyst)):
+            dibosonPdf_up[i] = RooHistFunc('WV_semileptonic_SM_%s_shape_%sUp'%(codename,signal_shapeSyst[i]),
+                                        'WV_semileptonic_SM_%s_shape_%sUp'%(codename,signal_shapeSyst[i]),
+                                        varSet,
+                                        dibosonHist_up[i])
+            dibosonPdf_down[i] = RooHistFunc('WV_semileptonic_SM_%s_shape_%sDown'%(codename,signal_shapeSyst[i]),
+                                          'WV_semileptonic_SM_%s_shape_%sDown'%(codename,signal_shapeSyst[i]),
+                                          varSet,
+                                          dibosonHist_down[i])
     
 
     print '\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ reading RooATGCFunction\n'
@@ -268,25 +226,53 @@ for section in fit_sections:
     print '\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ reading RooATGCSemi\n'
 
     if (doSignalShape_unc):
-        #    kappaLow = RooRealVar("kappaL","kappaL",0.9)
-        kappaLow = RooRealVar("kappaL","kappaL",norm_sig_sm_down/norm_sig_sm)
-        kappaLow.setConstant(True)
-        #    kappaHigh = RooRealVar("kappaH","kappaH",1.1)
-        kappaHigh = RooRealVar("kappaH","kappaH",norm_sig_sm_up/norm_sig_sm)
-        kappaHigh.setConstant(True)
-
-        theWS.factory("signalshape[-7,7]")
-        theta = theWS.var("signalshape")
-        #    theta = RooRealVar("signalshape","signalshape",0.,-4.,4.)
-        #    theta = RooRealVar("signalshape","theta",0.,-4.,4.)
-        #    theta = RooRealVar("theta","signalshape",0.,-4.,4.)
-        #    theta = RooRealVar("th","th",0.,-4.,4.)
+        kappaLow = {}
+        kappaHigh = {}
+        aTGCPdf_norm = {}
+        theta = {}
+        kappaLow_sum_d = 1.
+        kappaHigh_sum_d = 1.
         
-        aTGCPdf_norm = AsymPow('ATGCPdf_WWgammaZ_WV_atgc_semileptonic_%s_norm'%codename,
-                               'ATGCPdf_WV_%s_norm'%codename,
-                               kappaLow,
-                               kappaHigh,
-                               theta)
+        for i in range(0,len(signal_shapeSyst)):
+            kappaLow[i] = RooRealVar("kappaL_%s"%(i+1),"kappaL_%s"%(i+1),norm_sig_sm_down[i]/norm_sig_sm)
+            kappaLow[i].setConstant(True)
+            kappaHigh[i] = RooRealVar("kappaH_%s"%(i+1),"kappaH_%s"%(i+1),norm_sig_sm_up[i]/norm_sig_sm)
+            kappaHigh[i].setConstant(True)
+            kappaLow_sum_d = kappaLow_sum_d*norm_sig_sm_down[i]/norm_sig_sm
+            kappaHigh_sum_d = kappaHigh_sum_d*norm_sig_sm_up[i]/norm_sig_sm
+            
+            theWS.factory("%s[-7,7]"%signal_shapeSyst[i])
+            theta[i] = theWS.var("%s"%signal_shapeSyst[i])
+            
+            aTGCPdf_norm[i] = AsymPow('ATGCPdf_WWgammaZ_WV_atgc_semileptonic_%s_integral%s'%(codename,i+1),
+                                      'ATGCPdf_WV_%s_integral%s'%(codename,i+1),
+                                      kappaLow[i],
+                                      kappaHigh[i],
+                                      theta[i])
+#            aTGCPdf_norm_sum = aTGCPdf_norm_sum*aTGCPdf_norm[i]
+
+        if (len(signal_shapeSyst)==1):
+            aTGCPdf_norm_sum = aTGCPdf_norm[0]
+        else:
+            for i in range(0,len(signal_shapeSyst)):
+                if (i==0): prodset=RooArgList(aTGCPdf_norm[i])
+                else: prodset.add(RooArgList(aTGCPdf_norm[i]))
+            print 'printing aTGCPdf_norm[]  ',prodset.Print()
+#            prodset.add(aTGCPdf_norm[1])
+            aTGCPdf_norm_sum = RooProduct("aTGCPdf_norm_sum","aTGCPdf_norm_sum",prodset)
+#            aTGCPdf_norm_sum = RooProduct("aTGCPdf_norm_sum","aTGCPdf_norm_sum",RooArgSet(aTGCPdf_norm[0],aTGCPdf_norm[1]))
+
+        kappaLow_sum = RooRealVar("kappaLow_sum","kappaLow_sum",kappaLow_sum_d)
+        kappaHigh_sum = RooRealVar("kappaHigh_sum","kappaHigh_sum",kappaHigh_sum_d)
+
+        aTGCPdf_norm_sum.SetNameTitle('ATGCPdf_WWgammaZ_WV_atgc_semileptonic_%s_norm'%codename,
+                                      'ATGCPdf_WV_%s_norm'%codename)
+        
+#        aTGCPdf_norm[i] = AsymPow('ATGCPdf_WWgammaZ_WV_atgc_semileptonic_%s_norm'%codename,
+#                                  'ATGCPdf_WV_%s_norm'%codename,
+#                                  kappaLow_sum,
+#                                  kappaHigh_sum,
+#                                  theta_sum)
         
     aTGCPdf = RooATGCSemiAnalyticPdf_wz('ATGCPdf_WWgammaZ_WV_atgc_semileptonic_%s'%codename,
                                         'ATGCPdf_WV_%s'%codename,
@@ -300,26 +286,29 @@ for section in fit_sections:
                                         )
 
     if (doSignalShape_unc):
-        aTGCPdf_up = RooATGCSemiAnalyticPdf_wz('ATGCPdf_WWgammaZ_WV_atgc_semileptonic_%s_signalshapeUp'%codename,
-                                               'ATGCPdf_WV_%s'%codename,
-                                               wpt,
-                                               dkg,
-                                               lz,                                 
-                                               dg1,
-                                               dibosonPdf_up,
-                                               '%s/signal_WV_%s.root'%(basepath,codename),
-                                               limtype
-                                               )
-        aTGCPdf_down = RooATGCSemiAnalyticPdf_wz('ATGCPdf_WWgammaZ_WV_atgc_semileptonic_%s_signalshapeDown'%codename,
-                                                 'ATGCPdf_WV_%s'%codename,
-                                                 wpt,
-                                                 dkg,
-                                                 lz,                                 
-                                                 dg1,
-                                                 dibosonPdf_down,
-                                                 '%s/signal_WV_%s.root'%(basepath,codename),
-                                                 limtype
-                                                 )
+        aTGCPdf_up = {}
+        aTGCPdf_down = {}
+        for i in range(0,len(signal_shapeSyst)):
+            aTGCPdf_up[i] = RooATGCSemiAnalyticPdf_wz('ATGCPdf_WWgammaZ_WV_atgc_semileptonic_%s_%sUp'%(codename,signal_shapeSyst[i]),
+                                                   'ATGCPdf_WV_%s'%codename,
+                                                   wpt,
+                                                   dkg,
+                                                   lz,                                 
+                                                   dg1,
+                                                   dibosonPdf_up[i],
+                                                   '%s/signal_WV_%s.root'%(basepath,codename),
+                                                   limtype
+                                                   )
+            aTGCPdf_down[i] = RooATGCSemiAnalyticPdf_wz('ATGCPdf_WWgammaZ_WV_atgc_semileptonic_%s_%sDown'%(codename,signal_shapeSyst[i]),
+                                                     'ATGCPdf_WV_%s'%codename,
+                                                     wpt,
+                                                     dkg,
+                                                     lz,                                 
+                                                     dg1,
+                                                     dibosonPdf_down[i],
+                                                     '%s/signal_WV_%s.root'%(basepath,codename),
+                                                     limtype
+                                                     )
     
     
     print '\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ read RooATGCSemi\n'
@@ -331,9 +320,11 @@ for section in fit_sections:
         getattr(theWS, 'import')(bkgHist_systDown[i])
     getattr(theWS, 'import')(aTGCPdf)
     if (doSignalShape_unc):
-        getattr(theWS, 'import')(aTGCPdf_norm)
-        getattr(theWS, 'import')(aTGCPdf_up)
-        getattr(theWS, 'import')(aTGCPdf_down)
+        for i in range(0,len(signal_shapeSyst)):
+            getattr(theWS, 'import')(aTGCPdf_up[i])
+            getattr(theWS, 'import')(aTGCPdf_down[i])
+#            getattr(theWS, 'import')(aTGCPdf_norm[i])
+        getattr(theWS, 'import')(aTGCPdf_norm_sum)
     
     theWS.Print()
     
@@ -379,9 +370,9 @@ CMS_trigger_{codename[0]}       lnN     1.01                      -""".format(co
     card += """
 sigXSsyst           lnN     1.034                     -""".format(codename=codename,norm_sig_sm=norm_sig_sm,norm_bkg=norm_bkg,norm_obs=norm_obs,i=i,background_shapeSyst=background_shapeSyst[i])
     if (doSignalShape_unc):
-        card += """
-signalshape         shape1  1.0                       -
-"""
+        for i in range(0,len(signal_shapeSyst)):
+            card += """
+{signal_shapeSyst}        shape1  1.0                       -""".format(signal_shapeSyst=signal_shapeSyst[i])
     
     print card
 
