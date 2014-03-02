@@ -103,7 +103,7 @@ for section in fit_sections:
     
     theWS = RooWorkspace('WV_%sboosted'%codename, 'WV_%sboosted'%codename)
     
-    wpt = theWS.factory('W_pt[%f,%f]' % (data_obs.GetBinLowEdge(1), 
+    wpt = theWS.factory('W_pt_%s[%f,%f]' % (codename,data_obs.GetBinLowEdge(1), 
                                          data_obs.GetBinLowEdge(data_obs.GetNbinsX())+data_obs.GetBinWidth(data_obs.GetNbinsX())))
 
     binning=array('d',[])
