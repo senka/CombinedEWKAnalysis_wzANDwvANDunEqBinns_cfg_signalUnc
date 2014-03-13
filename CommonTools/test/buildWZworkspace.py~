@@ -55,19 +55,86 @@ for section in fit_sections:
     print 'lType=',lType
     f = TFile('%s/%s_boosted.root'%(basepath,codename))
 
-    background = f.Get('background')
+    Nbkg = cfg.get(codename,'Nbkg')
+    print "Nbkg= ",Nbkg
+    Nbkg_int=int(Nbkg)
 
-    background_shapeSyst = [string(i) for i in cfg.get(codename,'bkg_shape_syst').split(',')]
+#    bkg_name = {}
+#    bkg_name = array('u',[])
+    bkg_name = []
+    for i in range(1,Nbkg_int+1):
+        print 'bkg%i_name'%i
+        bkg_name.append(cfg.get(codename,'bkg%i_name'%i))
+#        print "bkg_name= ",bkg_name
+#    bkg_name = [string(i) for i in cfg.get(codename,'bkg_shape_syst').split(',')]
+    print "bkg_name= ",bkg_name
 
-    print 'using bkg shape syst = ',background_shapeSyst
+#    background = {}
+    background = []
 
-    background_backshapeUp = {}
-    background_backshapeDown = {}
+    for i in range(0,Nbkg_int):
+        background.append(f.Get(bkg_name[i]))
 
-    for i in range(0,len(background_shapeSyst)):
-        print ' bkg shape syst: ',background_shapeSyst[i]
-        background_backshapeUp[i] = f.Get('%sUp'%background_shapeSyst[i])
-        background_backshapeDown[i] = f.Get('%sDown'%background_shapeSyst[i])
+    print 'integral= ',background[0],' ',background[0].Integral()
+
+#    print 'backgrounds= ',background
+    print 'N_bkg= ', Nbkg_int
+    background_shapeSyst = []
+    for i in range(0,Nbkg_int):
+        background_shapeSyst.append([])
+        print i,' bkg%i_shape_syst'%(i+1)
+#        background_shapeSyst[i]=([string(j) for j in cfg.get(codename,'bkg%i_shape_syst'%(i+1)).split(',')])
+#        j=0
+        for name in cfg.get(codename,'bkg%i_shape_syst'%(i+1)).split(','):
+            print i,' name= ',name
+            background_shapeSyst[i].append(name)
+            print '\t next'
+#        background_shapeSyst.append([])
+#            print i,' ',j,' ',name
+#            j+=1
+
+    print 'using bkg shape syst = ',background_shapeSyst[0][0]
+    print '------> \t background_shapeSyst= ',background_shapeSyst
+
+# python 2D grid:
+#matrix = []
+#matrix.append([])
+#matrix.append([])
+#matrix[0].append(2)
+#matrix[1].append(3)
+
+# option 2:
+#a =[][]
+#for i in range(3):
+#    for j in range(3):
+#        a[i][j] = i+j
+#print a
+
+#    background_backshapeUp = {}
+#    background_backshapeDown = {}
+
+    background_backshapeUp = []
+#    background_backshapeUp.append([])
+    background_backshapeDown = []
+ #   background_backshapeDown.append([])
+
+    for j in range(0,Nbkg_int):
+        background_backshapeUp.append([])
+        background_backshapeDown.append([])
+        print 'j= ',j
+        for i in range(0,len(background_shapeSyst[j])):
+            print ' i= ',i
+#            print ' bkg shape syst: ',background_shapeSyst[i]
+            #        background_backshapeUp[i] = f.Get('%sUp'%background_shapeSyst[i])
+            #        background_backshapeDown[i] = f.Get('%sDown'%background_shapeSyst[i])
+            print ' getting bkgUp ','%sUp'%background_shapeSyst[j][i]
+            # here next problem:
+            background_backshapeUp[j].append(f.Get('%sUp'%background_shapeSyst[j][i]))
+            background_backshapeDown[j].append(f.Get('%sDown'%background_shapeSyst[j][i]))
+
+    print 'shape up: ',background_backshapeUp[0][0]
+    print 'shape down: ',background_backshapeDown
+    print '   integral for bkg',background_backshapeUp[0][0].Integral()
 
     data_obs = f.Get('data_obs')
     diboson = f.Get('diboson')
@@ -86,6 +153,7 @@ for section in fit_sections:
         norm_sig_sm_up = {}
         norm_sig_sm_down = {}
         signal_shapeSyst = [string(i) for i in cfg.get(codename,'signal_shape_syst').split(',')]
+#        signal_shapeSyst = cfg.get(codename,'signal_shape_syst')
         for i in range(0,len(signal_shapeSyst)):
             print ' signal shape syst: ',signal_shapeSyst[i]
             diboson_up[i] = f.Get('%sUp'%signal_shapeSyst[i])
@@ -93,11 +161,21 @@ for section in fit_sections:
             norm_sig_sm_up[i] = diboson_up[i].Integral()
             norm_sig_sm_down[i] = diboson_down[i].Integral()
 
+#        print 'signalshapeName=',signal_shapeSyst
+#        print 'signalshapeName=%sUp'%signal_shapeSyst
+#        diboson_up = f.Get('%sUp'%signal_shapeSyst)
+#        diboson_down = f.Get('%sDown'%signal_shapeSyst)
+#        norm_sig_sm_up = diboson_up.Integral()
+#        norm_sig_sm_down = diboson_down.Integral()
+
     
     norm_sig_sm = diboson.Integral()
-    norm_bkg = background.Integral()
+    norm_bkg = []
+    for i in range(0,Nbkg_int):
+        norm_bkg.append(background[i].Integral())
     norm_obs = data_obs.Integral()
-
+    print 'bkg integral: ',norm_bkg
+    
     if (doSignalShape_unc):
         print 'signal shape unc: ',norm_sig_sm_down,' ',norm_sig_sm,' ',norm_sig_sm_up
     
@@ -131,23 +209,38 @@ for section in fit_sections:
     varSet = RooArgSet(wpt)
 
     data = RooDataHist('data_obs', 'data_obs_WV_%s'%codename, vars, data_obs)
-    bkgHist = RooDataHist('WV_semileptonic_bkg_%s'%codename,
-                          'WV_semileptonic_bkg_%s'%codename,
-                          vars,
-                          background)
+    bkgHist = {}
+    for i in range(0,Nbkg_int):
+        bkgHist[i] = RooDataHist('WV_semileptonic_bkg%i_%s'%(i+1,codename),
+                              'WV_semileptonic_bkg%i_%s'%(i+1,codename),
+                              vars,
+                              background[i])
     
-    bkgHist_systUp = {}
-    bkgHist_systDown = {}
-    for i in range(0,len(background_shapeSyst)):
+    bkgHist_systUp = []
+    bkgHist_systDown = []
 
-        bkgHist_systUp[i] = RooDataHist('WV_semileptonic_bkg_%s_%sUp'%(codename,background_shapeSyst[i]),
-                                     'WV_semileptonic_bkg_%s_%sUp'%(codename,background_shapeSyst[i]),
-                                     vars,
-                                     background_backshapeUp[i])
-        bkgHist_systDown[i] = RooDataHist('WV_semileptonic_bkg_%s_%sDown'%(codename,background_shapeSyst[i]),
-                                       'WV_semileptonic_bkg_%s_%sDown'%(codename,background_shapeSyst[i]),
-                                       vars,
-                                       background_backshapeDown[i])
+    for j in range(0,Nbkg_int):
+        bkgHist_systUp.append([])
+        bkgHist_systDown.append([])
+        for i in range(0,len(background_shapeSyst[j])):
+            print '    i= ',i,' j= ',j
+            print '   integral for bkg ', background[j].Integral(),' up yield: ',background_backshapeUp[j][i].Integral(),' background_shapeSyst[j][i]= ',background_shapeSyst[j][i]
+            bkgHist_systUp[j].append(RooDataHist('WV_semileptonic_bkg%i_%s_%sUp'%(j+1,codename,background_shapeSyst[j][i]),
+                                               'WV_semileptonic_bkg%i_%s_%sUp'%(j+1,codename,background_shapeSyst[j][i]),
+                                               vars,
+                                               background_backshapeUp[j][i]))
+            bkgHist_systDown[j].append(RooDataHist('WV_semileptonic_bkg%i_%s_%sDown'%(j+1,codename,background_shapeSyst[j][i]),
+                                                 'WV_semileptonic_bkg%i_%s_%sDown'%(j+1,codename,background_shapeSyst[j][i]),
+                                                 vars,
+                                                 background_backshapeDown[j][i]))
+#            bkgHist_systUp[j][i] = RooDataHist('WV_semileptonic_bkg_%s_%sUp'%(codename,background_shapeSyst[j][i]),
+#                                               'WV_semileptonic_bkg_%s_%sUp'%(codename,background_shapeSyst[j][i]),
+#                                               vars,
+#                                               background_backshapeUp[j][i])
+#            bkgHist_systDown[j][i] = RooDataHist('WV_semileptonic_bkg_%s_%sDown'%(codename,background_shapeSyst[j][i]),
+#                                                 'WV_semileptonic_bkg_%s_%sDown'%(codename,background_shapeSyst[j][i]),
+#                                                 vars,
+#                                                 background_backshapeDown[j][i])
    
     dibosonHist = RooDataHist('WV_semileptonic_SM_%s_rawshape'%codename,
                               'WV_semileptonic_SM_%s_rawshape'%codename,
@@ -241,6 +334,7 @@ for section in fit_sections:
                                       kappaLow[i],
                                       kappaHigh[i],
                                       theta[i])
+#            aTGCPdf_norm_sum = aTGCPdf_norm_sum*aTGCPdf_norm[i]
 
         if (len(signal_shapeSyst)==1):
             aTGCPdf_norm_sum = aTGCPdf_norm[0]
@@ -249,7 +343,9 @@ for section in fit_sections:
                 if (i==0): prodset=RooArgList(aTGCPdf_norm[i])
                 else: prodset.add(RooArgList(aTGCPdf_norm[i]))
             print 'printing aTGCPdf_norm[]  ',prodset.Print()
+#            prodset.add(aTGCPdf_norm[1])
             aTGCPdf_norm_sum = RooProduct("aTGCPdf_norm_sum","aTGCPdf_norm_sum",prodset)
+#            aTGCPdf_norm_sum = RooProduct("aTGCPdf_norm_sum","aTGCPdf_norm_sum",RooArgSet(aTGCPdf_norm[0],aTGCPdf_norm[1]))
 
         kappaLow_sum = RooRealVar("kappaLow_sum","kappaLow_sum",kappaLow_sum_d)
         kappaHigh_sum = RooRealVar("kappaHigh_sum","kappaHigh_sum",kappaHigh_sum_d)
@@ -257,6 +353,11 @@ for section in fit_sections:
         aTGCPdf_norm_sum.SetNameTitle('ATGCPdf_WWgammaZ_WV_atgc_semileptonic_%s_norm'%codename,
                                       'ATGCPdf_WV_%s_norm'%codename)
         
+#        aTGCPdf_norm[i] = AsymPow('ATGCPdf_WWgammaZ_WV_atgc_semileptonic_%s_norm'%codename,
+#                                  'ATGCPdf_WV_%s_norm'%codename,
+#                                  kappaLow_sum,
+#                                  kappaHigh_sum,
+#                                  theta_sum)
         
     aTGCPdf = RooATGCSemiAnalyticPdf_wz('ATGCPdf_WWgammaZ_WV_atgc_semileptonic_%s'%codename,
                                         'ATGCPdf_WV_%s'%codename,
@@ -298,10 +399,12 @@ for section in fit_sections:
     print '\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ read RooATGCSemi\n'
     
     getattr(theWS, 'import')(data)
-    getattr(theWS, 'import')(bkgHist)
-    for i in range(0,len(background_shapeSyst)):
-        getattr(theWS, 'import')(bkgHist_systUp[i])
-        getattr(theWS, 'import')(bkgHist_systDown[i])
+    for i in range(0,Nbkg_int):
+        getattr(theWS, 'import')(bkgHist[i])
+    for j in range(0,Nbkg_int):
+        for i in range(0,len(background_shapeSyst[j])):
+            getattr(theWS, 'import')(bkgHist_systUp[j][i])
+            getattr(theWS, 'import')(bkgHist_systDown[j][i])
     getattr(theWS, 'import')(aTGCPdf)
     if (doSignalShape_unc):
         for i in range(0,len(signal_shapeSyst)):
@@ -320,11 +423,14 @@ for section in fit_sections:
     card = """
 # Simple counting experiment, with one signal and a few background processes 
 imax 1  number of channels
-jmax 1  number of backgrounds
+jmax {Nbkg_int}  number of backgrounds
 kmax *  number of nuisance parameters (sources of systematical uncertainties)
-------------
-shapes WV_semileptonic_bkg_{codename}  {codename}boosted ./{codename}_boosted_ws.root WV_{codename}boosted:$PROCESS WV_{codename}boosted:$PROCESS_$SYSTEMATIC
-shapes data_obs                {codename}boosted ./{codename}_boosted_ws.root WV_{codename}boosted:$PROCESS """.format(codename=codename,norm_sig_sm=norm_sig_sm,norm_bkg=norm_bkg,norm_obs=norm_obs)
+------------""".format(codename=codename,norm_sig_sm=norm_sig_sm,norm_bkg=norm_bkg,norm_obs=norm_obs,Nbkg_int=Nbkg_int)
+    for i in range(0,Nbkg_int):
+        card += """
+shapes WV_semileptonic_bkg{Nbkg_int}_{codename}  {codename}boosted ./{codename}_boosted_ws.root WV_{codename}boosted:$PROCESS WV_{codename}boosted:$PROCESS_$SYSTEMATIC""".format(Nbkg_int=i+1,codename=codename,norm_sig_sm=norm_sig_sm,norm_bkg=norm_bkg,norm_obs=norm_obs)
+    card += """
+shapes data_obs                {codename}boosted ./{codename}_boosted_ws.root WV_{codename}boosted:$PROCESS """.format(codename=codename,norm_sig_sm=norm_sig_sm,norm_bkg=norm_bkg,norm_obs=norm_obs,Nbkg_int=Nbkg_int)
     if (doSignalShape_unc):
         card += """   
 shapes WWgammaZ_WV_atgc_semileptonic_{codename} {codename}boosted ./{codename}_boosted_ws.root WV_{codename}boosted:ATGCPdf_$PROCESS WV_{codename}boosted:ATGCPdf_$PROCESS_$SYSTEMATIC """.format(codename=codename,norm_sig_sm=norm_sig_sm,norm_bkg=norm_bkg,norm_obs=norm_obs)
@@ -338,26 +444,70 @@ shapes WWgammaZ_WV_atgc_semileptonic_{codename} {codename}boosted ./{codename}_b
 bin {codename}boosted 
 observation {norm_obs}
 ------------
-bin                         {codename}boosted		      {codename}boosted
-process                     WWgammaZ_WV_atgc_semileptonic_{codename}   WV_semileptonic_bkg_{codename}
-process                     0			      1		
-rate                        {norm_sig_sm}		      {norm_bkg}	
-    
-------------
-lumi_8TeV           lnN     1.044		      -
-CMS_eff_{codename[0]}           lnN     1.02                      -
-CMS_trigger_{codename[0]}       lnN     1.01                      -""".format(codename=codename,norm_sig_sm=norm_sig_sm,norm_bkg=norm_bkg,norm_obs=norm_obs)
+bin                         {codename}boosted\t\t""".format(codename=codename,norm_sig_sm=norm_sig_sm,norm_bkg=norm_bkg,norm_obs=norm_obs)
 
-    for i in range(0,len(background_shapeSyst)):
-        card += """
-{background_shapeSyst} shape  -                         1.0 """.format(codename=codename,norm_sig_sm=norm_sig_sm,norm_bkg=norm_bkg,norm_obs=norm_obs,i=i,background_shapeSyst=background_shapeSyst[i])
+    for i in range(0,Nbkg_int):
+        card += """\t\t\t{codename}boosted""".format(codename=codename,norm_sig_sm=norm_sig_sm,norm_bkg=norm_bkg[i],norm_obs=norm_obs)
+
+    card += """       
+process\t\t\t    WWgammaZ_WV_atgc_semileptonic_{codename}    """.format(codename=codename,norm_sig_sm=norm_sig_sm,norm_bkg=norm_bkg[i],norm_obs=norm_obs)
+
+    for i in range(0,Nbkg_int):
+        card += """\tWV_semileptonic_bkg{Nbkg_int}_{codename}""".format(Nbkg_int=i+1,codename=codename,norm_sig_sm=norm_sig_sm,norm_bkg=norm_bkg[i],norm_obs=norm_obs)
+
+    card += """       
+process                     0	  	      """.format(codename=codename,norm_sig_sm=norm_sig_sm,norm_bkg=norm_bkg[i],norm_obs=norm_obs)
+
+    for i in range(0,Nbkg_int):
+        card += """ \t\t\t\t{i}""".format(i=i+1,codename=codename,norm_sig_sm=norm_sig_sm,norm_bkg=norm_bkg[i],norm_obs=norm_obs)
+        
+    card += """       
+rate                        {norm_sig_sm}\t""".format(codename=codename,norm_sig_sm=norm_sig_sm,norm_bkg=norm_bkg[i],norm_obs=norm_obs)
+
+    for i in range(0,Nbkg_int):
+        card += """ \t\t\t{norm_bkg}""".format(codename=codename,norm_sig_sm=norm_sig_sm,norm_bkg=norm_bkg[i],norm_obs=norm_obs)
+
+	
+    card += """           
+------------
+lumi_8TeV           lnN     1.044             """
+    for i in range(0,Nbkg_int):
+        card += """\t\t\t\t-"""
+    
+    card += """       
+CMS_eff_{codename[0]}           lnN     1.02          """.format(codename=codename,norm_sig_sm=norm_sig_sm,norm_bkg=norm_bkg[i],norm_obs=norm_obs)
+
+    for i in range(0,Nbkg_int):
+        card += """\t\t\t\t-"""
+
+    card += """       
+CMS_trigger_{codename[0]}       lnN     1.01               """.format(codename=codename,norm_sig_sm=norm_sig_sm,norm_bkg=norm_bkg,norm_obs=norm_obs)
+
+    for i in range(0,Nbkg_int):
+        card += """\t\t\t\t-""".format(codename=codename,norm_sig_sm=norm_sig_sm,norm_bkg=norm_bkg,norm_obs=norm_obs)
+
+    for j in range(0,Nbkg_int):
+        for i in range(0,len(background_shapeSyst[j])):
+            card += """
+{background_shapeSyst} shape  """.format(codename=codename,norm_sig_sm=norm_sig_sm,norm_bkg=norm_bkg,norm_obs=norm_obs,i=i,background_shapeSyst=background_shapeSyst[j][i])
+            for k in range(0,j+1):
+                card += """-\t\t\t\t""".format(codename=codename,norm_sig_sm=norm_sig_sm,norm_bkg=norm_bkg,norm_obs=norm_obs,i=i,background_shapeSyst=background_shapeSyst[j][i])
+            card += """1.0 """.format(codename=codename,norm_sig_sm=norm_sig_sm,norm_bkg=norm_bkg,norm_obs=norm_obs,i=i,background_shapeSyst=background_shapeSyst[j][i])
+            for k in range(1,Nbkg_int-j):
+                card += """\t\t\t\t-""".format(codename=codename,norm_sig_sm=norm_sig_sm,norm_bkg=norm_bkg,norm_obs=norm_obs,i=i,background_shapeSyst=background_shapeSyst[j][i])
     card += """
-sigXSsyst           lnN     1.034                     -""".format(codename=codename,norm_sig_sm=norm_sig_sm,norm_bkg=norm_bkg,norm_obs=norm_obs,i=i)
+sigXSsyst           lnN     1.034          """
+
+    for i in range(0,Nbkg_int):
+        card += """\t\t\t\t-""".format(codename=codename,norm_sig_sm=norm_sig_sm,norm_bkg=norm_bkg,norm_obs=norm_obs,i=i)
     if (doSignalShape_unc):
         for i in range(0,len(signal_shapeSyst)):
             card += """
-{signal_shapeSyst}        shape1  1.0                       -""".format(signal_shapeSyst=signal_shapeSyst[i])
+{signal_shapeSyst}        shape1  1.0          """.format(signal_shapeSyst=signal_shapeSyst[i])
     
+            for i in range(0,Nbkg_int):
+                card += """\t\t\t\t-""".format(codename=codename,norm_sig_sm=norm_sig_sm,norm_bkg=norm_bkg,norm_obs=norm_obs)
+
     print card
 
     cardfile = open('wv_semil_%sboosted.txt'%(codename),'w')
