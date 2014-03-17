@@ -37,7 +37,7 @@ class HagiwaraAndZeppenfeldTwoDimensionalModel_wz(AnomalousCouplingModel):
         self.modelBuilder.out._import(SM_diboson_shape)
         SM_diboson_shape_dhist = r.RooDataHist('DHIST_SM_wv_semil_%s_shape_for_scale'%lepchannel,
                     'DHIST_SM_wv_semil_%s_shape_for_scale'%lepchannel,
-                    r.RooArgList(self.modelBuilder.out.var('W_pt_%s'%(lepchannel))),
+                    r.RooArgList(self.modelBuilder.out.var('W_pt_%s'%lepchannel)),
                     self.modelBuilder.out.obj('SM_wv_semil_%s_shape_for_scale'%lepchannel))
         self.modelBuilder.out._import(SM_diboson_shape_dhist)        
 #        self.modelBuilder.factory_('RooHistFunc::Scaling_base_pdf_%s({W_pt},DHIST_SM_wv_semil_mu_shape_for_scale)'%(scalerName))              
