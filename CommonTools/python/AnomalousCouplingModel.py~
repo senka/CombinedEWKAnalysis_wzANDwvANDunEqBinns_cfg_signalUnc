@@ -20,9 +20,6 @@ class AnomalousCouplingModel(PhysicsModel):
         for po in physOptions:
             if po.startswith("modes="):
                 self.modes = po.replace("modes=","").split(",")
-            if po.startswith("channels="):
-                self.lepchannels = po.replace("channels=","").split(",")
-                print 'changing channels: ',self.lepchannels
             if po.startswith("poi="):
                 temp = copy(po)
                 print temp
