@@ -84,7 +84,7 @@ for section in fit_sections:
         background_backshapeUp.append([])
         background_backshapeDown.append([])
         for i in range(0,len(background_shapeSyst[j])):
-            print ' bkg shape syst: ',background_shapeSyst[i]
+            print ' bkg shape syst: ',background_shapeSyst[j]
             print ' getting bkgUp ','%sUp'%background_shapeSyst[j][i]
             background_backshapeUp[j].append(f.Get('%sUp'%background_shapeSyst[j][i]))
             background_backshapeDown[j].append(f.Get('%sDown'%background_shapeSyst[j][i]))
