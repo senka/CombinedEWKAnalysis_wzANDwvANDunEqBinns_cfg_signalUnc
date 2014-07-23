@@ -321,13 +321,13 @@ for section in fit_sections:
     
 
 #    print '\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ reading RooATGCFunction\n'
-    aTGC = RooATGCFunction_wz('ATGC_shapescale_WWgammaZ_WV_atgc_semileptonic_%s'%codename,
-                              'ATGC_shapescale_%s'%codename,
-                              wpt,
-                              lz,
-                              dkg,
-                              dg1, 
-                              '%s/signal_WV_%s.root'%(basepath,codename))
+#    aTGC = RooATGCFunction_wz('ATGC_shapescale_WWgammaZ_WV_atgc_semileptonic_%s'%codename,
+#                              'ATGC_shapescale_%s'%codename,
+#                              wpt,
+#                              lz,
+#                              dkg,
+#                              dg1, 
+#                              '%s/signal_WV_%s.root'%(basepath,codename))
     
 #    print '\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ read RooATGCFunction\n'
     limtype = -1
